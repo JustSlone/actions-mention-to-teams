@@ -50,8 +50,14 @@ jobs:
 
 ## Development
 
-### build dist/index.js
+1. install deps
 
 ```
-$ npm run build
+$ yarn
+```
+
+2. build dist/index.js
+
+```
+$ yarn run build
 ```
