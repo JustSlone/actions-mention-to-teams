@@ -74,7 +74,7 @@ export const TeamsRepositoryImpl = {
     webhookUrl: string,   
     post: TeamsPostParam
   ) => {
-    console.log('postToSlack', post);
+    console.log('postToSlack', post);   
 
     const test_post: TeamsPostParam = {
       headline: 'New issue notifcation',

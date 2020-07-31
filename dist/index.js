@@ -11977,7 +11977,6 @@ exports.buildTeamsErrorMessage = (error, currentJobUrl) => {
 exports.TeamsRepositoryImpl = {
     postToTeams: async (webhookUrl, post) => {
         console.log('postToSlack', post);
-        webhookUrl = "https://prod-01.westus2.logic.azure.com:443/workflows/8fb4771ed2cb4544bb227d71ddfd1a4c/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=5IrVE7vGgQR_VaDpfKEv6WzC3z0PYdT0rQoimsvmgaQ";
         const test_post = {
             headline: 'New issue notifcation',
             message: 'Goto this issue! [Test Issue](https://github.com/JustSlone/actions-mention-to-slack/issues/1#issuecomment-665969793)',
