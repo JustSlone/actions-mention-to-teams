@@ -13,13 +13,13 @@ export const buildTeamsPostMessage = (
   const mentionBlock = githubIdsForMention.map((id) => `@${id}`).join(" ");
   const body = githubBody
     .split("\n")
-    .map((line) => `> ${line}`)
+    .map((line) => `>\u2003⁣⁣⁣⁣⁣⁣‎‎‎‎${line}`)
     .join("\n\n");
 
   const message = [
     mentionBlock,
-    `${githubIdsForMention.length === 1 ? "has" : "have"}`,
-    `been mentioned at [${issueTitle}](${commentLink}) by ${senderName}`,
+    //`${githubIdsForMention.length === 1 ? "has" : "have"}`,    
+    `You been mentioned at [${issueTitle}](${commentLink}) by ${senderName}`,
   ].join(" ");
 
   const post: TeamsPostParam =  {
@@ -34,14 +34,14 @@ export const buildTeamsPostMessage = (
 };
 
 const openIssueLink =
-  "https://github.com/abeyuya/actions-mention-to-slack/issues/new";
+  "https://github.com/abeyuya/actions-mention-to-teams/issues/new";
 
 export const buildTeamsErrorMessage = (
   error: Error,
   currentJobUrl?: string
 ) => {
-  console.log('buildSlackErrorMessage', error.message);
-  const jobTitle = "mention-to-slack action";
+  console.log('buildTeamsErrorMessage', error.message);
+  const jobTitle = "mention-to-teams action";
   const jobLinkMessage = currentJobUrl
     ? `<${currentJobUrl}|${jobTitle}>`
     : jobTitle;
@@ -74,16 +74,16 @@ export const TeamsRepositoryImpl = {
     webhookUrl: string,   
     post: TeamsPostParam
   ) => {
-    console.log('postToSlack', post);   
+    console.log('postToTeams', post);   
 
-    const test_post: TeamsPostParam = {
-      headline: 'New issue notifcation',
-      message: 'Goto this issue! [Test Issue](https://github.com/JustSlone/actions-mention-to-slack/issues/1#issuecomment-665969793)',
-      summary: 'sadf',
-      mentions: ['jslone'], 
-      isAlert: true
-    }
-    console.log(test_post);
+    // const test_post: TeamsPostParam = {
+    //   headline: 'New issue notifcation',
+    //   message: 'Goto this issue! [Test Issue](https://github.com/JustSlone/actions-mention-to-slack/issues/1#issuecomment-665969793)',
+    //   summary: 'sadf',
+    //   mentions: ['jslone'], 
+    //   isAlert: true
+    // }
+    // console.log(test_post);
 
     await axios.post(webhookUrl, JSON.stringify(post), {
       headers: { "Content-Type": "application/json" },

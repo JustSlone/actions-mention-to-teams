@@ -1,5 +1,5 @@
 {
-  "name": "actions-mention-to-slack",
+  "name": "actions-mention-to-teams",
   "version": "1.0.0",
   "description": "",
   "main": "src/index.ts",
@@ -24,12 +24,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/justslone/actions-mention-to-slack.git"
+    "url": "git+https://github.com/justslone/actions-mention-to-teams.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/justslone/actions-mention-to-slack/issues"
+    "url": "https://github.com/justslone/actions-mention-to-teams/issues"
   },
-  "homepage": "https://github.com/justslone/actions-mention-to-slack#readme"
+  "homepage": "https://github.com/justslone/actions-mention-to-teams#readme"
 }

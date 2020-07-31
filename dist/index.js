@@ -3399,7 +3399,7 @@ exports.execPrReviewRequestedMention = async (payload, allInputs, teamsClient) =
     // const requestedSlackUserId = slackIds[0];
     const requestUsername = (_c = payload.sender) === null || _c === void 0 ? void 0 : _c.login;
     const message = `You (@${requestedGithubUsername}) has been requested to review [${title}](${url}) by @${requestUsername}.`;
-    const { slackWebhookUrl } = allInputs;
+    const { teamsWebhookUrl } = allInputs;
     const post = {
         headline: title,
         summary: 'New PR Review Request!',
@@ -3407,9 +3407,9 @@ exports.execPrReviewRequestedMention = async (payload, allInputs, teamsClient) =
         mentions: [requestedGithubUsername],
         isAlert: true,
     };
-    await teamsClient.postToTeams(slackWebhookUrl, post);
+    await teamsClient.postToTeams(teamsWebhookUrl, post);
 };
-exports.execNormalMention = async (payload, allInputs, slackClient) => {
+exports.execNormalMention = async (payload, allInputs, teamsClient) => {
     console.log('execNormalMention');
     const info = github_2.pickupInfoFromGithubPayload(payload);
     if (info.body === null) {
@@ -3433,8 +3433,8 @@ exports.execNormalMention = async (payload, allInputs, slackClient) => {
     //   return;
     // }
     const post = teams_1.buildTeamsPostMessage(githubUsernames, info.title, info.url, info.body, info.senderName);
-    const { slackWebhookUrl } = allInputs;
-    await slackClient.postToTeams(slackWebhookUrl, post);
+    const { teamsWebhookUrl } = allInputs;
+    await teamsClient.postToTeams(teamsWebhookUrl, post);
 };
 const buildCurrentJobUrl = (runId) => {
     const { owner, repo } = github_1.context.repo;
@@ -3445,7 +3445,7 @@ exports.execPostError = async (error, allInputs, teamsClient) => {
     const currentJobUrl = runId ? buildCurrentJobUrl(runId) : undefined;
     const message = teams_1.buildTeamsErrorMessage(error, currentJobUrl);
     core.warning(message);
-    const { slackWebhookUrl } = allInputs;
+    const { teamsWebhookUrl } = allInputs;
     const post = {
         headline: 'ERROR',
         summary: 'Error!',
@@ -3453,34 +3453,31 @@ exports.execPostError = async (error, allInputs, teamsClient) => {
         mentions: [],
         isAlert: true,
     };
-    await teamsClient.postToTeams(slackWebhookUrl, post);
+    await teamsClient.postToTeams(teamsWebhookUrl, post);
 };
 const getAllInputs = () => {
-    console.log('getAllInputs');
-    const slackWebhookUrl = core.getInput("slack-webhook-url", {
+    const teamsWebhookUrl = core.getInput("teams-webhook-url", {
         required: true,
     });
-    if (!slackWebhookUrl) {
-        core.setFailed("Error! Need to set `slack-webhook-url`.");
+    if (!teamsWebhookUrl) {
+        core.setFailed("Error! Need to set `teams-webhook-url`.");
     }
-    const repoToken = core.getInput("repo-token", { required: true });
-    if (!repoToken) {
-        core.setFailed("Error! Need to set `repo-token`.");
-    }
-    const iconUrl = core.getInput("icon-url", { required: false });
-    const botName = core.getInput("bot-name", { required: false });
-    const configurationPath = core.getInput("configuration-path", {
-        required: true,
-    });
+    // const repoToken = core.getInput("repo-token", { required: true });
+    // if (!repoToken) {
+    //   core.setFailed("Error! Need to set `repo-token`.");
+    // }
+    // const iconUrl = core.getInput("icon-url", { required: false });
+    // const botName = core.getInput("bot-name", { required: false });
+    // const configurationPath = core.getInput("configuration-path", {
+    //   required: true,
+    // });
     const runId = core.getInput("run-id", { required: false });
-    return {
-        repoToken,
-        configurationPath,
-        slackWebhookUrl,
-        iconUrl,
-        botName,
+    const allInputs = {
+        teamsWebhookUrl,
         runId,
     };
+    console.log("got inputs", allInputs);
+    return allInputs;
 };
 exports.main = async () => {
     console.log('Start of run');
@@ -11938,12 +11935,12 @@ exports.buildTeamsPostMessage = (githubIdsForMention, issueTitle, commentLink, g
     const mentionBlock = githubIdsForMention.map((id) => `@${id}`).join(" ");
     const body = githubBody
         .split("\n")
-        .map((line) => `> ${line}`)
+        .map((line) => `>\u2003⁣⁣⁣⁣⁣⁣‎‎‎‎${line}`)
         .join("\n\n");
     const message = [
         mentionBlock,
-        `${githubIdsForMention.length === 1 ? "has" : "have"}`,
-        `been mentioned at [${issueTitle}](${commentLink}) by ${senderName}`,
+        //`${githubIdsForMention.length === 1 ? "has" : "have"}`,    
+        `You been mentioned at [${issueTitle}](${commentLink}) by ${senderName}`,
     ].join(" ");
     const post = {
         headline: issueTitle,
@@ -11954,10 +11951,10 @@ exports.buildTeamsPostMessage = (githubIdsForMention, issueTitle, commentLink, g
     };
     return post;
 };
-const openIssueLink = "https://github.com/abeyuya/actions-mention-to-slack/issues/new";
+const openIssueLink = "https://github.com/abeyuya/actions-mention-to-teams/issues/new";
 exports.buildTeamsErrorMessage = (error, currentJobUrl) => {
-    console.log('buildSlackErrorMessage', error.message);
-    const jobTitle = "mention-to-slack action";
+    console.log('buildTeamsErrorMessage', error.message);
+    const jobTitle = "mention-to-teams action";
     const jobLinkMessage = currentJobUrl
         ? `<${currentJobUrl}|${jobTitle}>`
         : jobTitle;
@@ -11976,15 +11973,15 @@ exports.buildTeamsErrorMessage = (error, currentJobUrl) => {
 // const defaultAlert = true;
 exports.TeamsRepositoryImpl = {
     postToTeams: async (webhookUrl, post) => {
-        console.log('postToSlack', post);
-        const test_post = {
-            headline: 'New issue notifcation',
-            message: 'Goto this issue! [Test Issue](https://github.com/JustSlone/actions-mention-to-slack/issues/1#issuecomment-665969793)',
-            summary: 'sadf',
-            mentions: ['jslone'],
-            isAlert: true
-        };
-        console.log(test_post);
+        console.log('postToTeams', post);
+        // const test_post: TeamsPostParam = {
+        //   headline: 'New issue notifcation',
+        //   message: 'Goto this issue! [Test Issue](https://github.com/JustSlone/actions-mention-to-slack/issues/1#issuecomment-665969793)',
+        //   summary: 'sadf',
+        //   mentions: ['jslone'], 
+        //   isAlert: true
+        // }
+        // console.log(test_post);
         await axios_1.default.post(webhookUrl, JSON.stringify(post), {
             headers: { "Content-Type": "application/json" },
         });

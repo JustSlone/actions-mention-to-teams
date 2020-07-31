@@ -2,7 +2,7 @@
     "action": "created",
     "comment": {
        "author_association": "OWNER",
-       "body": "Once more with feeling @JustSlone ",
+       "body": "Once more with feeling @JustSlone\nThis is another line\nAnd another one, hello\nOne more line!",
        "created_at": "2020-07-29T22:49:07Z",
        "html_url": "https://github.com/JustSlone/actions-mention-to-slack/issues/1#issuecomment-665969793",
        "id": 665969793,

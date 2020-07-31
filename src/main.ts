@@ -14,11 +14,7 @@ import {
 } from "./modules/teams";
 
 export type AllInputs = {
-  repoToken: string;
-  configurationPath: string;
-  slackWebhookUrl: string;
-  iconUrl?: string;
-  botName?: string;
+  teamsWebhookUrl: string;
   runId?: string;
 };
 
@@ -67,7 +63,7 @@ export const execPrReviewRequestedMention = async (
   const requestUsername = payload.sender?.login;
 
   const message = `You (@${requestedGithubUsername}) has been requested to review [${title}](${url}) by @${requestUsername}.`;
-  const { slackWebhookUrl } = allInputs;
+  const { teamsWebhookUrl } = allInputs;
 
   const post: TeamsPostParam = {
     headline: title,
@@ -77,13 +73,13 @@ export const execPrReviewRequestedMention = async (
     isAlert: true,
   }
 
-  await teamsClient.postToTeams(slackWebhookUrl, post);
+  await teamsClient.postToTeams(teamsWebhookUrl, post);
 };
 
 export const execNormalMention = async (
   payload: WebhookPayload,
   allInputs: AllInputs,
-  slackClient: typeof TeamsRepositoryImpl
+  teamsClient: typeof TeamsRepositoryImpl
 ) => {
   console.log('execNormalMention');
   const info = pickupInfoFromGithubPayload(payload);
@@ -120,9 +116,9 @@ export const execNormalMention = async (
     info.senderName
   );
 
-  const { slackWebhookUrl } = allInputs;
+  const { teamsWebhookUrl } = allInputs;
 
-  await slackClient.postToTeams(slackWebhookUrl, post);
+  await teamsClient.postToTeams(teamsWebhookUrl, post);
 };
 
 const buildCurrentJobUrl = (runId: string) => {
@@ -141,51 +137,48 @@ export const execPostError = async (
 
   core.warning(message);
 
-  const { slackWebhookUrl } = allInputs;
+  const { teamsWebhookUrl } = allInputs;
 
-  const post: TeamsPostParam =  {
+  const post: TeamsPostParam = {
     headline: 'ERROR',
     summary: 'Error!',
     message: message,
     mentions: [],
     isAlert: true,
   }
-  
 
-  await teamsClient.postToTeams(slackWebhookUrl, post);
+
+  await teamsClient.postToTeams(teamsWebhookUrl, post);
 };
 
 const getAllInputs = (): AllInputs => {
-  console.log('getAllInputs');
 
-  const slackWebhookUrl = core.getInput("slack-webhook-url", {
+  const teamsWebhookUrl = core.getInput("teams-webhook-url", {
     required: true,
   });
 
-  if (!slackWebhookUrl) {
-    core.setFailed("Error! Need to set `slack-webhook-url`.");
+  if (!teamsWebhookUrl) {
+    core.setFailed("Error! Need to set `teams-webhook-url`.");
   }
 
-  const repoToken = core.getInput("repo-token", { required: true });
-  if (!repoToken) {
-    core.setFailed("Error! Need to set `repo-token`.");
-  }
+  // const repoToken = core.getInput("repo-token", { required: true });
+  // if (!repoToken) {
+  //   core.setFailed("Error! Need to set `repo-token`.");
+  // }
 
-  const iconUrl = core.getInput("icon-url", { required: false });
-  const botName = core.getInput("bot-name", { required: false });
-  const configurationPath = core.getInput("configuration-path", {
-    required: true,
-  });
+  // const iconUrl = core.getInput("icon-url", { required: false });
+  // const botName = core.getInput("bot-name", { required: false });
+  // const configurationPath = core.getInput("configuration-path", {
+  //   required: true,
+  // });
   const runId = core.getInput("run-id", { required: false });
 
-  return {
-    repoToken,
-    configurationPath,
-    slackWebhookUrl,
-    iconUrl,
-    botName,
+  const allInputs = {
+    teamsWebhookUrl,
     runId,
   };
+  console.log("got inputs", allInputs);
+  return allInputs;
 };
 
 export const main = async () => {
