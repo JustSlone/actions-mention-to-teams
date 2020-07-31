@@ -9,18 +9,13 @@ export const buildTeamsPostMessage = (
   senderName: string
 ) => {
   console.log('buildTeamsPostMessage', githubIdsForMention, issueTitle, commentLink, githubBody, senderName);
-
-  const mentionBlock = githubIdsForMention.map((id) => `@${id}`).join(" ");
+  
   const body = githubBody
     .split("\n")
     .map((line) => `>\u2003⁣⁣⁣⁣⁣⁣‎‎‎‎${line}`)
     .join("\n\n");
 
-  const message = [
-    mentionBlock,
-    //`${githubIdsForMention.length === 1 ? "has" : "have"}`,    
-    `You been mentioned at [${issueTitle}](${commentLink}) by ${senderName}`,
-  ].join(" ");
+  const message = `You have been mentioned at [${issueTitle}](${commentLink}) by ${senderName}`;
 
   const post: TeamsPostParam =  {
     headline: issueTitle,
