@@ -10,13 +10,15 @@ describe("modules/teams", () => {
         ["teamsUser1"],
         "title",
         "link",
-        "message",
+        "Test Message",
         "sender_github_username"
       );
       
       expect(result.headline.includes("title")).toEqual(true);
       expect(result.mentions.includes("teamsUser1")).toEqual(true);
-      expect(result.message.includes("@teamsUser1 You been mentioned at [title](link) by sender_github_username\n\n> ⁣⁣⁣⁣⁣⁣‎‎‎‎message")).toEqual(true);
+      expect(result.message.includes("[title](link)")).toEqual(true);
+      expect(result.message.includes("sender_github_username")).toEqual(true);
+      expect(result.message.includes("Test Message")).toEqual(true);      
       expect(result.summary.includes("New mention!")).toEqual(true);
     });
   });
