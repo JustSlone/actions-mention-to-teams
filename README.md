@@ -52,6 +52,13 @@ jobs:
 The backend for this action is written with Power Automate. 
 Grab the [Microsoft Power Automate template here](https://github.com/JustSlone/actions-mention-to-teams/releases/tag/PowerAutomate) and import the file on MS Power Automate: [Import Package](https://preview.flow.microsoft.com/manage/flows/import)
 
+### Setting up Power Automate 
+1. When importing the package you'll need to login in to teams to give Power Automate permission to message teams. 
+1. Once you setup the Flow, copy URL from the HTTP Endpoint trigger and set it up in your Repo secrets (e.g. `TEAMS_WEBHOOK_URL`)
+1. Then you'll need to update the GitHub to Teams mapping table (see below)
+![GitHub To Teams mapping](https://i.imgur.com/gwQEMal.png)
+
+
 ## Development
 
 1. install deps: `$ yarn`
