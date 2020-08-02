@@ -48,16 +48,11 @@ jobs:
           run-id: ${{ github.run_id }}     
 ```
 
+## Power Automate template
+The backend for this action is written with Power Automate. 
+Grab the [Microsoft Power Automate template here](https://github.com/JustSlone/actions-mention-to-teams/releases/tag/PowerAutomate) and import the file on MS Power Automate: [Import Package](https://preview.flow.microsoft.com/manage/flows/import)
+
 ## Development
 
-1. install deps
-
-```
-$ yarn
-```
-
-2. build dist/index.js
-
-```
-$ yarn run build
-```
+1. install deps: `$ yarn`
+2. build dist/index.js: `$ yarn run build`
