@@ -62,4 +62,14 @@ Grab the [Microsoft Power Automate template here](https://github.com/JustSlone/a
 ## Development
 
 1. install deps: `$ yarn`
-2. build dist/index.js: `$ yarn run build`
+2. build dist/index.js: `$ yarn run build` (Note, you'll need to build before committing so the dist files get updated)
+
+This repo is setup to run the action within it, so you should be able to just fork and start creating issues to run the action. 
+
+I recommend using [nektos/act](https://github.com/nektos/act) for local testing. You'll need docker, but once you set it up you can just do:
+```
+$ export TEAMS_WEBHOOK_URL="<url from power automate>"
+$ act -s TEAMS_WEBHOOK_URL -j mention-to-teams -e issue_comment_payload.json
+```
+You will also probably want to edit `issue_comment_payload.json` to have your username. 
+
