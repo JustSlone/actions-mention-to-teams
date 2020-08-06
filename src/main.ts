@@ -2,12 +2,8 @@ import * as core from "@actions/core";
 import { context } from "@actions/github";
 import { WebhookPayload } from "@actions/github/lib/interfaces";
 
-import {
-  pickupUsername,
-  pickupInfoFromGithubPayload,
-} from "./modules/github";
-import {
-  buildTeamsPostMessage,
+import { pickupUsername, pickupInfoFromGithubPayload } from "./modules/github";
+import {  
   buildTeamsErrorMessage,
   TeamsRepositoryImpl,
   TeamsPostParam,
@@ -44,7 +40,7 @@ export const execPrReviewRequestedMention = async (
   allInputs: AllInputs,
   teamsClient: typeof TeamsRepositoryImpl
 ) => {
-  console.log('execPrReviewRequestedMention', payload);
+  console.log("execPrReviewRequestedMention", payload);
   const requestedGithubUsername = payload.requested_reviewer.login;
   // const slackIds = await convertToSlackUsername(
   //   [requestedGithubUsername],
@@ -67,11 +63,11 @@ export const execPrReviewRequestedMention = async (
 
   const post: TeamsPostParam = {
     headline: title,
-    summary: 'New PR Review Request!',
+    summary: `New PR Review Request from @${requestUsername}!`,
     message: message,
     mentions: [requestedGithubUsername],
-    isAlert: true,
-  }
+    isAlert: false,
+  };
 
   await teamsClient.postToTeams(teamsWebhookUrl, post);
 };
@@ -81,42 +77,35 @@ export const execNormalMention = async (
   allInputs: AllInputs,
   teamsClient: typeof TeamsRepositoryImpl
 ) => {
-  console.log('execNormalMention');
+  console.log("execNormalMention");
   const info = pickupInfoFromGithubPayload(payload);
 
   if (info.body === null) {
-    console.error('info.body === null');
+    console.error("info.body === null");
     return;
   }
 
   const githubUsernames = pickupUsername(info.body);
   if (githubUsernames.length === 0) {
-    console.error('githubUsernames.length === 0');
+    console.error("githubUsernames.length === 0");
     return;
   }
 
-  // const { repoToken, configurationPath } = allInputs;
-  // const slackIds = await convertToSlackUsername(
-  //   githubUsernames,
-  //   githubClient,
-  //   repoToken,
-  //   configurationPath
-  // );
+  const body = info.body
+    .split("\n")
+    .map((line) => `>\u2003⁣⁣⁣⁣⁣⁣‎‎‎‎${line}`)
+    .join("\n\n");
 
-  // if (slackIds.length === 0) {
-  //   console.error('slackIds.length === 0');
-  //   return;
-  // }
-
-  const post = buildTeamsPostMessage(
-    githubUsernames,
-    info.title,
-    info.url,
-    info.body,
-    info.senderName
-  );
+  const message = `You have been mentioned at [${info.title}](${info.url}) by @${info.senderName}`;
 
   const { teamsWebhookUrl } = allInputs;
+  const post: TeamsPostParam = {
+    headline: info.title,
+    summary: `New mention from @${info.senderName}!`,
+    message: `${message}\n\n${body}`,
+    mentions: githubUsernames,
+    isAlert: false,
+  };
 
   await teamsClient.postToTeams(teamsWebhookUrl, post);
 };
@@ -140,19 +129,17 @@ export const execPostError = async (
   const { teamsWebhookUrl } = allInputs;
 
   const post: TeamsPostParam = {
-    headline: 'ERROR',
-    summary: 'Error!',
+    headline: "ERROR",
+    summary: "Error!",
     message: message,
     mentions: [],
-    isAlert: true,
-  }
-
+    isAlert: false,
+  };
 
   await teamsClient.postToTeams(teamsWebhookUrl, post);
 };
 
 const getAllInputs = (): AllInputs => {
-
   const teamsWebhookUrl = core.getInput("teams-webhook-url", {
     required: true,
   });
@@ -182,7 +169,7 @@ const getAllInputs = (): AllInputs => {
 };
 
 export const main = async () => {
-  console.log('Start of run');
+  console.log("Start of run");
 
   const { payload } = context;
   const allInputs = getAllInputs();
@@ -197,13 +184,9 @@ export const main = async () => {
       return;
     }
 
-    await execNormalMention(
-      payload,
-      allInputs,
-      TeamsRepositoryImpl
-    );
+    await execNormalMention(payload, allInputs, TeamsRepositoryImpl);
   } catch (error) {
-    console.log('Caught error:', error.message);
+    console.log("Caught error:", error.message);
     await execPostError(error, allInputs, TeamsRepositoryImpl);
   }
 };

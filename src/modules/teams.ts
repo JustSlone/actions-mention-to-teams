@@ -22,14 +22,14 @@ export const buildTeamsPostMessage = (
     summary: 'New mention!',
     message: `${message}\n\n${body}`,
     mentions: githubIdsForMention,
-    isAlert: true,
+    isAlert: false,
   }
 
   return post;
 };
 
 const openIssueLink =
-  "https://github.com/abeyuya/actions-mention-to-teams/issues/new";
+  "https://github.com/justSlone/actions-mention-to-teams/issues/new";
 
 export const buildTeamsErrorMessage = (
   error: Error,

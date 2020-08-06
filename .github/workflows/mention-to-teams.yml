@@ -18,8 +18,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v2
-      - name: Run        
+      - name: Run
         uses: ./
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          teams-webhook-url: ${{ secrets.TEAMS_WEBHOOK_URL }}   
+          teams-webhook-url: ${{ secrets.TEAMS_WEBHOOK_URL }}

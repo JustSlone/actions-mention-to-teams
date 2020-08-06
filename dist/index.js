@@ -3383,7 +3383,7 @@ const teams_1 = __webpack_require__(752);
 // };
 exports.execPrReviewRequestedMention = async (payload, allInputs, teamsClient) => {
     var _a, _b, _c;
-    console.log('execPrReviewRequestedMention', payload);
+    console.log("execPrReviewRequestedMention", payload);
     const requestedGithubUsername = payload.requested_reviewer.login;
     // const slackIds = await convertToSlackUsername(
     //   [requestedGithubUsername],
@@ -3402,38 +3402,38 @@ exports.execPrReviewRequestedMention = async (payload, allInputs, teamsClient) =
     const { teamsWebhookUrl } = allInputs;
     const post = {
         headline: title,
-        summary: 'New PR Review Request!',
+        summary: `New PR Review Request from @${requestUsername}!`,
         message: message,
         mentions: [requestedGithubUsername],
-        isAlert: true,
+        isAlert: false,
     };
     await teamsClient.postToTeams(teamsWebhookUrl, post);
 };
 exports.execNormalMention = async (payload, allInputs, teamsClient) => {
-    console.log('execNormalMention');
+    console.log("execNormalMention");
     const info = github_2.pickupInfoFromGithubPayload(payload);
     if (info.body === null) {
-        console.error('info.body === null');
+        console.error("info.body === null");
         return;
     }
     const githubUsernames = github_2.pickupUsername(info.body);
     if (githubUsernames.length === 0) {
-        console.error('githubUsernames.length === 0');
+        console.error("githubUsernames.length === 0");
         return;
     }
-    // const { repoToken, configurationPath } = allInputs;
-    // const slackIds = await convertToSlackUsername(
-    //   githubUsernames,
-    //   githubClient,
-    //   repoToken,
-    //   configurationPath
-    // );
-    // if (slackIds.length === 0) {
-    //   console.error('slackIds.length === 0');
-    //   return;
-    // }
-    const post = teams_1.buildTeamsPostMessage(githubUsernames, info.title, info.url, info.body, info.senderName);
+    const body = info.body
+        .split("\n")
+        .map((line) => `>\u2003⁣⁣⁣⁣⁣⁣‎‎‎‎${line}`)
+        .join("\n\n");
+    const message = `You have been mentioned at [${info.title}](${info.url}) by @${info.senderName}`;
     const { teamsWebhookUrl } = allInputs;
+    const post = {
+        headline: info.title,
+        summary: `New mention from @${info.senderName}!`,
+        message: `${message}\n\n${body}`,
+        mentions: githubUsernames,
+        isAlert: false,
+    };
     await teamsClient.postToTeams(teamsWebhookUrl, post);
 };
 const buildCurrentJobUrl = (runId) => {
@@ -3447,11 +3447,11 @@ exports.execPostError = async (error, allInputs, teamsClient) => {
     core.warning(message);
     const { teamsWebhookUrl } = allInputs;
     const post = {
-        headline: 'ERROR',
-        summary: 'Error!',
+        headline: "ERROR",
+        summary: "Error!",
         message: message,
         mentions: [],
-        isAlert: true,
+        isAlert: false,
     };
     await teamsClient.postToTeams(teamsWebhookUrl, post);
 };
@@ -3480,7 +3480,7 @@ const getAllInputs = () => {
     return allInputs;
 };
 exports.main = async () => {
-    console.log('Start of run');
+    console.log("Start of run");
     const { payload } = github_1.context;
     const allInputs = getAllInputs();
     try {
@@ -3491,7 +3491,7 @@ exports.main = async () => {
         await exports.execNormalMention(payload, allInputs, teams_1.TeamsRepositoryImpl);
     }
     catch (error) {
-        console.log('Caught error:', error.message);
+        console.log("Caught error:", error.message);
         await exports.execPostError(error, allInputs, teams_1.TeamsRepositoryImpl);
     }
 };
@@ -11942,11 +11942,11 @@ exports.buildTeamsPostMessage = (githubIdsForMention, issueTitle, commentLink, g
         summary: 'New mention!',
         message: `${message}\n\n${body}`,
         mentions: githubIdsForMention,
-        isAlert: true,
+        isAlert: false,
     };
     return post;
 };
-const openIssueLink = "https://github.com/abeyuya/actions-mention-to-teams/issues/new";
+const openIssueLink = "https://github.com/justSlone/actions-mention-to-teams/issues/new";
 exports.buildTeamsErrorMessage = (error, currentJobUrl) => {
     console.log('buildTeamsErrorMessage', error.message);
     const jobTitle = "mention-to-teams action";
