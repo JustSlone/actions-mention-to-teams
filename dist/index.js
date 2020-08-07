@@ -3365,7 +3365,7 @@ const github_1 = __webpack_require__(469);
 const github_2 = __webpack_require__(559);
 const teams_1 = __webpack_require__(752);
 exports.execPrReviewRequestedMention = async (payload, allInputs, teamsClient) => {
-    console.log("execPrReviewRequestedMention");
+    core.debug("execPrReviewRequestedMention");
     const prInfo = github_2.pickupPrInfoFromGithubPayload(payload);
     if (!prInfo.title) {
         throw new Error("prInfo.title is null or undefined");
@@ -3381,7 +3381,7 @@ exports.execPrReviewRequestedMention = async (payload, allInputs, teamsClient) =
     await teamsClient.postToTeams(teamsWebhookUrl, post);
 };
 exports.execNormalMention = async (payload, allInputs, teamsClient) => {
-    console.log("execNormalMention");
+    core.debug("execNormalMention");
     const info = github_2.pickupInfoFromGithubPayload(payload);
     if (info.body === null) {
         throw new Error("info.body === null");
@@ -3399,6 +3399,7 @@ const buildCurrentJobUrl = (runId) => {
     return `https://github.com/${owner}/${repo}/runs/${runId}`;
 };
 exports.execPostError = async (error, allInputs, teamsClient) => {
+    core.debug("execPostError");
     const { runId } = allInputs;
     const currentJobUrl = runId ? buildCurrentJobUrl(runId) : undefined;
     const message = teams_1.buildTeamsErrorMessage(error, currentJobUrl);
@@ -3425,23 +3426,30 @@ const getAllInputs = () => {
         teamsWebhookUrl,
         runId,
     };
-    console.log("got inputs", allInputs);
     return allInputs;
 };
 exports.main = async () => {
-    console.log("Start of run");
+    core.info("Start of run");
     const { payload } = github_1.context;
     try {
         const allInputs = getAllInputs();
+        core.info("Got inputs");
         try {
             if (payload.action === "review_requested") {
+                core.info("PR Review requested");
                 await exports.execPrReviewRequestedMention(payload, allInputs, teams_1.TeamsRepositoryImpl);
+                core.info("PR Review requested - Suceeded!");
                 return;
             }
-            await exports.execNormalMention(payload, allInputs, teams_1.TeamsRepositoryImpl);
+            else {
+                core.info("Normal mention");
+                await exports.execNormalMention(payload, allInputs, teams_1.TeamsRepositoryImpl);
+                core.info("Normal mention - Suceeded!");
+                return;
+            }
         }
         catch (error) {
-            console.log("Caught error:", error.message);
+            core.debug(`Caught error: ${error.message}`);
             await exports.execPostError(error, allInputs, teams_1.TeamsRepositoryImpl);
         }
     }
@@ -11851,14 +11859,34 @@ module.exports = require("fs");
 
 "use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TeamsRepositoryImpl = exports.buildTeamsErrorMessage = exports.buildTeamsNormalMention = exports.buildPrReviewRequestedMention = void 0;
 const axios_1 = __importDefault(__webpack_require__(53));
+const core = __importStar(__webpack_require__(470));
 exports.buildPrReviewRequestedMention = (requestedGithubUsername, prTitle, prUrl, requestorUsername) => {
-    console.log('buildPrReviewRequestedMention', requestedGithubUsername, prTitle, prUrl, requestorUsername);
+    core.debug(`buildPrReviewRequestedMention ${JSON.stringify({ requestedGithubUsername, prTitle, prUrl, requestorUsername })}`);
     const message = `You (@${requestedGithubUsername}) has been requested to review [${prTitle}](${prUrl}) by @${requestorUsername}.`;
     const post = {
         headline: prTitle,
@@ -11870,7 +11898,7 @@ exports.buildPrReviewRequestedMention = (requestedGithubUsername, prTitle, prUrl
     return post;
 };
 exports.buildTeamsNormalMention = (githubIdsForMention, issueTitle, commentUrl, githubBody, senderName) => {
-    console.log('buildTeamsPostMessage', githubIdsForMention, issueTitle, commentUrl, githubBody, senderName);
+    core.debug(`buildTeamsPostMessage ${JSON.stringify({ githubIdsForMention, issueTitle, commentUrl, githubBody, senderName })}`);
     const body = githubBody
         .split("\n")
         .map((line) => `>\u2003⁣⁣⁣⁣⁣⁣‎‎‎‎${line}`)
@@ -11887,7 +11915,7 @@ exports.buildTeamsNormalMention = (githubIdsForMention, issueTitle, commentUrl, 
 };
 const openIssueLink = "https://github.com/justSlone/actions-mention-to-teams/issues/new";
 exports.buildTeamsErrorMessage = (error, currentJobUrl) => {
-    console.log('buildTeamsErrorMessage', error.message);
+    core.debug(`buildTeamsErrorMessage ${JSON.stringify({ error, currentJobUrl })}`);
     const jobTitle = "mention-to-teams action";
     const jobLinkMessage = currentJobUrl
         ? `<${currentJobUrl}|${jobTitle}>`
@@ -11904,7 +11932,7 @@ exports.buildTeamsErrorMessage = (error, currentJobUrl) => {
 };
 exports.TeamsRepositoryImpl = {
     postToTeams: async (webhookUrl, post) => {
-        console.log('postToTeams', post);
+        core.debug(`postToTeams ${JSON.stringify({ post })}`);
         await axios_1.default.post(webhookUrl, JSON.stringify(post), {
             headers: { "Content-Type": "application/json" },
         });

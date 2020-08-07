@@ -25,7 +25,7 @@ export const execPrReviewRequestedMention = async (
   allInputs: AllInputs,
   teamsClient: typeof TeamsRepositoryImpl
 ) => {
-  console.log("execPrReviewRequestedMention");
+  core.debug("execPrReviewRequestedMention");
 
   const prInfo = pickupPrInfoFromGithubPayload(payload);
 
@@ -58,7 +58,7 @@ export const execNormalMention = async (
   allInputs: AllInputs,
   teamsClient: typeof TeamsRepositoryImpl
 ) => {
-  console.log("execNormalMention");
+  core.debug("execNormalMention");
   const info = pickupInfoFromGithubPayload(payload);
 
   if (info.body === null) {
@@ -93,6 +93,8 @@ export const execPostError = async (
   allInputs: AllInputs,
   teamsClient: typeof TeamsRepositoryImpl
 ) => {
+  core.debug("execPostError");
+
   const { runId } = allInputs;
   const currentJobUrl = runId ? buildCurrentJobUrl(runId) : undefined;
   const message = buildTeamsErrorMessage(error, currentJobUrl);
@@ -128,29 +130,34 @@ const getAllInputs = (): AllInputs => {
     runId,
   };
 
-  console.log("got inputs", allInputs);
   return allInputs;
 };
 
 export const main = async () => {
-  core.debug("Start of run");
+  core.info("Start of run");
 
   const { payload } = context;
   try {
     const allInputs = getAllInputs();
+    core.info("Got inputs");
     try {
       if (payload.action === "review_requested") {
+        core.info("PR Review requested");
         await execPrReviewRequestedMention(
           payload,
           allInputs,
           TeamsRepositoryImpl
         );
+        core.info("PR Review requested - Suceeded!");
+        return;
+      } else {
+        core.info("Normal mention");
+        await execNormalMention(payload, allInputs, TeamsRepositoryImpl);
+        core.info("Normal mention - Suceeded!");
         return;
       }
-
-      await execNormalMention(payload, allInputs, TeamsRepositoryImpl);
     } catch (error) {
-      console.log("Caught error:", error.message);
+      core.debug(`Caught error: ${error.message}`);
       await execPostError(error, allInputs, TeamsRepositoryImpl);
     }
   } catch (allinputsError) {

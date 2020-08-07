@@ -1,4 +1,5 @@
 import axios from "axios";
+import * as core from "@actions/core";
 
 export const buildPrReviewRequestedMention  = (
   requestedGithubUsername: string,
@@ -6,8 +7,8 @@ export const buildPrReviewRequestedMention  = (
   prUrl: string,  
   requestorUsername: string
 ) => {
-  console.log('buildPrReviewRequestedMention', requestedGithubUsername, prTitle, prUrl, requestorUsername);
-  
+  core.debug(`buildPrReviewRequestedMention ${JSON.stringify({requestedGithubUsername, prTitle, prUrl, requestorUsername})}`);
+ 
   const message = `You (@${requestedGithubUsername}) has been requested to review [${prTitle}](${prUrl}) by @${requestorUsername}.`;
 
   const post: TeamsPostParam = {
@@ -28,7 +29,7 @@ export const buildTeamsNormalMention = (
   githubBody: string,
   senderName: string
 ) => {
-  console.log('buildTeamsPostMessage', githubIdsForMention, issueTitle, commentUrl, githubBody, senderName);
+  core.debug(`buildTeamsPostMessage ${JSON.stringify({githubIdsForMention, issueTitle, commentUrl, githubBody, senderName})}`);
   
   const body = githubBody
     .split("\n")
@@ -56,7 +57,8 @@ export const buildTeamsErrorMessage = (
   error: Error,
   currentJobUrl?: string
 ) => {
-  console.log('buildTeamsErrorMessage', error.message);
+  core.debug(`buildTeamsErrorMessage ${JSON.stringify({error, currentJobUrl})}`);
+  
   const jobTitle = "mention-to-teams action";
   const jobLinkMessage = currentJobUrl
     ? `<${currentJobUrl}|${jobTitle}>`
@@ -86,7 +88,7 @@ export const TeamsRepositoryImpl = {
     webhookUrl: string,   
     post: TeamsPostParam
   ) => {
-    console.log('postToTeams', post);   
+    core.debug(`postToTeams ${JSON.stringify({post})}`);   
 
     await axios.post(webhookUrl, JSON.stringify(post), {
       headers: { "Content-Type": "application/json" },

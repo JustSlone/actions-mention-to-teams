@@ -20,7 +20,8 @@
   },
   "scripts": {
     "test": "jest",
-    "build": "ncc build"
+    "build": "ncc build",
+    "watch": "ncc build --watch"
   },
   "repository": {
     "type": "git",
