@@ -57,6 +57,7 @@ Grab the [Microsoft Power Automate template here](https://github.com/JustSlone/a
 1. Once you setup the Flow, copy URL from the HTTP Endpoint trigger and set it up in your Repo secrets (e.g. `TEAMS_WEBHOOK_URL`)
 1. Then you'll need to update the GitHub to Teams mapping table (see below)
 ![GitHub To Teams mapping](https://i.imgur.com/gwQEMal.png)
+  - Note when errors occur they will be posted to the gitHubUser: `userForErrorNotifications` add an entry for this username to get errors posted to a teams account
 
 
 ## Development
@@ -69,7 +70,7 @@ This repo is setup to run the action within it, so you should be able to just fo
 I recommend using [nektos/act](https://github.com/nektos/act) for local testing. You'll need docker, but once you set it up you can just do:
 ```
 $ export TEAMS_WEBHOOK_URL="<url from power automate>"
-$ act -s TEAMS_WEBHOOK_URL -j mention-to-teams -e issue_comment_payload.json
+$ act -s TEAMS_WEBHOOK_URL -j mention-to-teams -e __tests__/issue_comment_payload.json
 ```
 You will also probably want to edit `issue_comment_payload.json` to have your username. 
 
