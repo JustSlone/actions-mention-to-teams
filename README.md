@@ -74,3 +74,6 @@ $ act -s TEAMS_WEBHOOK_URL -j mention-to-teams -e __tests__/issue_comment_payloa
 ```
 You will also probably want to edit `issue_comment_payload.json` to have your username. 
 
+## Debugging
+
+The project uses `core.debug` for debugging statements [See More](https://github.com/actions/toolkit/blob/master/docs/action-debugging.md#step-debug-logs). You can display debug statements in your logs by [setting the secret](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/creating-and-using-encrypted-secrets#creating-encrypted-secrets) `ACTIONS_STEP_DEBUG` to `true`.
