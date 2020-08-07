@@ -29,12 +29,14 @@ export const execPrReviewRequestedMention = async (
 
   const prInfo = pickupPrInfoFromGithubPayload(payload);
 
-  if (!prInfo.title) {
-    throw new Error("prInfo.title is null or undefined");
+  if (!prInfo.title) {    
+    console.log("PR title is null or undefined");
+    return;
   }
 
   if (!prInfo.requestedGithubUsername) {
-    throw new Error("prInfo.requestedGithubUsername is null or undefined");
+    console.log("PR does not request any reviews");
+    return;     
   }
 
   if (!prInfo.url) {
@@ -61,13 +63,15 @@ export const execNormalMention = async (
   core.debug("execNormalMention");
   const info = pickupInfoFromGithubPayload(payload);
 
-  if (info.body === null) {
-    throw new Error("info.body === null");
+  if (info.body === null) {    
+    console.log("Body is empty");
+    return;
   }
 
   const githubUsernames = pickupUsername(info.body);
   if (githubUsernames.length === 0) {
-    throw new Error("githubUsernames.length === 0");
+    console.log("No GitHub usernames to mention");
+    return;    
   }
 
   const post = buildTeamsNormalMention(

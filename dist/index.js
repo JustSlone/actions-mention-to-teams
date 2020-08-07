@@ -3368,10 +3368,12 @@ exports.execPrReviewRequestedMention = async (payload, allInputs, teamsClient) =
     core.debug("execPrReviewRequestedMention");
     const prInfo = github_2.pickupPrInfoFromGithubPayload(payload);
     if (!prInfo.title) {
-        throw new Error("prInfo.title is null or undefined");
+        console.log("PR title is null or undefined");
+        return;
     }
     if (!prInfo.requestedGithubUsername) {
-        throw new Error("prInfo.requestedGithubUsername is null or undefined");
+        console.log("PR does not request any reviews");
+        return;
     }
     if (!prInfo.url) {
         throw new Error("prInfo.url is null or undefined");
@@ -3384,11 +3386,13 @@ exports.execNormalMention = async (payload, allInputs, teamsClient) => {
     core.debug("execNormalMention");
     const info = github_2.pickupInfoFromGithubPayload(payload);
     if (info.body === null) {
-        throw new Error("info.body === null");
+        console.log("Body is empty");
+        return;
     }
     const githubUsernames = github_2.pickupUsername(info.body);
     if (githubUsernames.length === 0) {
-        throw new Error("githubUsernames.length === 0");
+        console.log("No GitHub usernames to mention");
+        return;
     }
     const post = teams_1.buildTeamsNormalMention(githubUsernames, info.title, info.url, info.body, info.senderName);
     const { teamsWebhookUrl } = allInputs;
