@@ -3417,7 +3417,7 @@ const getAllInputs = () => {
     const teamsWebhookUrl = core.getInput("teams-webhook-url", {
         required: true,
     });
-    if (!teamsWebhookUrl) {
+    if (teamsWebhookUrl === null) {
         core.setFailed("Error! Need to set `teams-webhook-url`.");
     }
     const runId = core.getInput("run-id", { required: false });
@@ -3431,17 +3431,22 @@ const getAllInputs = () => {
 exports.main = async () => {
     console.log("Start of run");
     const { payload } = github_1.context;
-    const allInputs = getAllInputs();
     try {
-        if (payload.action === "review_requested") {
-            await exports.execPrReviewRequestedMention(payload, allInputs, teams_1.TeamsRepositoryImpl);
-            return;
+        const allInputs = getAllInputs();
+        try {
+            if (payload.action === "review_requested") {
+                await exports.execPrReviewRequestedMention(payload, allInputs, teams_1.TeamsRepositoryImpl);
+                return;
+            }
+            await exports.execNormalMention(payload, allInputs, teams_1.TeamsRepositoryImpl);
         }
-        await exports.execNormalMention(payload, allInputs, teams_1.TeamsRepositoryImpl);
+        catch (error) {
+            console.log("Caught error:", error.message);
+            await exports.execPostError(error, allInputs, teams_1.TeamsRepositoryImpl);
+        }
     }
-    catch (error) {
-        console.log("Caught error:", error.message);
-        await exports.execPostError(error, allInputs, teams_1.TeamsRepositoryImpl);
+    catch (allinputsError) {
+        core.setFailed(allinputsError);
     }
 };
 

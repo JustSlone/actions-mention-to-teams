@@ -28,7 +28,7 @@ export const execPrReviewRequestedMention = async (
   console.log("execPrReviewRequestedMention");
 
   const prInfo = pickupPrInfoFromGithubPayload(payload);
-  
+
   if (!prInfo.title) {
     throw new Error("prInfo.title is null or undefined");
   }
@@ -38,7 +38,7 @@ export const execPrReviewRequestedMention = async (
   }
 
   if (!prInfo.url) {
-    throw new Error("prInfo.url is null or undefined");    
+    throw new Error("prInfo.url is null or undefined");
   }
 
   const post = buildPrReviewRequestedMention(
@@ -117,7 +117,7 @@ const getAllInputs = (): AllInputs => {
     required: true,
   });
 
-  if (!teamsWebhookUrl) {
+  if (teamsWebhookUrl === null) {
     core.setFailed("Error! Need to set `teams-webhook-url`.");
   }
 
@@ -127,29 +127,33 @@ const getAllInputs = (): AllInputs => {
     teamsWebhookUrl,
     runId,
   };
+
   console.log("got inputs", allInputs);
   return allInputs;
 };
 
 export const main = async () => {
-  console.log("Start of run");
+  core.debug("Start of run");
 
   const { payload } = context;
-  const allInputs = getAllInputs();
-
   try {
-    if (payload.action === "review_requested") {
-      await execPrReviewRequestedMention(
-        payload,
-        allInputs,
-        TeamsRepositoryImpl
-      );
-      return;
-    }
+    const allInputs = getAllInputs();
+    try {
+      if (payload.action === "review_requested") {
+        await execPrReviewRequestedMention(
+          payload,
+          allInputs,
+          TeamsRepositoryImpl
+        );
+        return;
+      }
 
-    await execNormalMention(payload, allInputs, TeamsRepositoryImpl);
-  } catch (error) {
-    console.log("Caught error:", error.message);
-    await execPostError(error, allInputs, TeamsRepositoryImpl);
+      await execNormalMention(payload, allInputs, TeamsRepositoryImpl);
+    } catch (error) {
+      console.log("Caught error:", error.message);
+      await execPostError(error, allInputs, TeamsRepositoryImpl);
+    }
+  } catch (allinputsError) {
+    core.setFailed(allinputsError);
   }
 };
