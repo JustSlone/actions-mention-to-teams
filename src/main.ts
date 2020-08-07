@@ -148,12 +148,12 @@ export const main = async () => {
           allInputs,
           TeamsRepositoryImpl
         );
-        core.info("PR Review requested - Suceeded!");
+        core.info("Suceeded!");
         return;
       } else {
         core.info("Normal mention");
         await execNormalMention(payload, allInputs, TeamsRepositoryImpl);
-        core.info("Normal mention - Suceeded!");
+        core.info("Suceeded!");
         return;
       }
     } catch (error) {

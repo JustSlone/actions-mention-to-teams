@@ -3438,13 +3438,13 @@ exports.main = async () => {
             if (payload.action === "review_requested") {
                 core.info("PR Review requested");
                 await exports.execPrReviewRequestedMention(payload, allInputs, teams_1.TeamsRepositoryImpl);
-                core.info("PR Review requested - Suceeded!");
+                core.info("Suceeded!");
                 return;
             }
             else {
                 core.info("Normal mention");
                 await exports.execNormalMention(payload, allInputs, teams_1.TeamsRepositoryImpl);
-                core.info("Normal mention - Suceeded!");
+                core.info("Suceeded!");
                 return;
             }
         }
