@@ -1,6 +1,4 @@
-// import { GitHub, context } from "@actions/github";
 import { WebhookPayload } from "@actions/github/lib/interfaces";
-// import * as yaml from "js-yaml";
 
 const uniq = <T>(arr: T[]): T[] => [...new Set(arr)];
 
@@ -27,6 +25,17 @@ const buildError = (payload: object): Error => {
   return new Error(
     `unknown event hook: ${JSON.stringify(payload, undefined, 2)}`
   );
+};
+
+export const pickupPrInfoFromGithubPayload = (
+  payload: WebhookPayload
+) => {
+  return {
+    requestedGithubUsername: payload.requested_reviewer?.login as string,
+    title: payload.pull_request?.title as string,
+    url: payload.pull_request?.html_url as string,
+    requestorUsername: payload.sender?.login as string,
+  };
 };
 
 export const pickupInfoFromGithubPayload = (
@@ -110,42 +119,3 @@ export const pickupInfoFromGithubPayload = (
 
   throw buildError(payload);
 };
-
-// const fetchContent = async (
-//   client: GitHub,
-//   repoPath: string
-// ): Promise<string> => {
-//   let params = {
-//     owner: context.repo.owner,
-//     repo: context.repo.repo,
-//     path: repoPath,
-//     ref: context.sha,
-//   };
-//   console.log('fetchContent', params);
-//   const response: any = await client.repos.getContents(params);
-
-//   return Buffer.from(response.data.content, response.data.encoding).toString();
-// };
-
-// type MappingFile = {
-//   [githugUsername: string]: string | undefined;
-// };
-
-// export const GithubRepositoryImpl = {
-//   loadNameMappingConfig: async (
-//     repoToken: string,
-//     configurationPath: string
-//   ) => {
-//     console.log('loadNameMappingConfig', configurationPath);
-//     const githubClient = new GitHub(repoToken);
-//     const configurationContent = await fetchContent(
-//       githubClient,
-//       configurationPath
-//     );
-
-//     console.log('before safeLoad', configurationContent);
-//     const configObject: MappingFile = yaml.safeLoad(configurationContent) as MappingFile;
-//     console.log('after safeLoad', configObject);
-//     return configObject;
-//   },
-// };

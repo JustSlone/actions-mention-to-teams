@@ -2,8 +2,14 @@ import * as core from "@actions/core";
 import { context } from "@actions/github";
 import { WebhookPayload } from "@actions/github/lib/interfaces";
 
-import { pickupUsername, pickupInfoFromGithubPayload } from "./modules/github";
-import {  
+import {
+  pickupUsername,
+  pickupPrInfoFromGithubPayload,
+  pickupInfoFromGithubPayload,
+} from "./modules/github";
+import {
+  buildPrReviewRequestedMention,
+  buildTeamsNormalMention,
   buildTeamsErrorMessage,
   TeamsRepositoryImpl,
   TeamsPostParam,
@@ -14,60 +20,35 @@ export type AllInputs = {
   runId?: string;
 };
 
-// export const convertToSlackUsername = async (
-//   githubUsernames: string[],
-//   githubClient: typeof GithubRepositoryImpl,
-//   repoToken: string,
-//   configurationPath: string
-// ): Promise<string[]> => {
-//   console.log('convertToSlackUsername', githubUsernames, configurationPath);
-
-//   const mapping = await githubClient.loadNameMappingConfig(
-//     repoToken,
-//     configurationPath
-//   );
-//   console.log('mapping', mapping)
-
-//   const slackIds = githubUsernames
-//     .map((githubUsername) => mapping[githubUsername])
-//     .filter((slackId) => slackId !== undefined) as string[];
-
-//   return slackIds;
-// };
-
 export const execPrReviewRequestedMention = async (
   payload: WebhookPayload,
   allInputs: AllInputs,
   teamsClient: typeof TeamsRepositoryImpl
 ) => {
-  console.log("execPrReviewRequestedMention", payload);
-  const requestedGithubUsername = payload.requested_reviewer.login;
-  // const slackIds = await convertToSlackUsername(
-  //   [requestedGithubUsername],
-  //   githubClient,
-  //   repoToken,
-  //   configurationPath
-  // );
+  console.log("execPrReviewRequestedMention");
 
-  // if ([requestedGithubUsername].length === 0) {
-  //   return;
-  // }
+  const prInfo = pickupPrInfoFromGithubPayload(payload);
+  
+  if (!prInfo.title) {
+    throw new Error("prInfo.title is null or undefined");
+  }
 
-  const title = payload.pull_request?.title;
-  const url = payload.pull_request?.html_url;
-  // const requestedSlackUserId = slackIds[0];
-  const requestUsername = payload.sender?.login;
+  if (!prInfo.requestedGithubUsername) {
+    throw new Error("prInfo.requestedGithubUsername is null or undefined");
+  }
 
-  const message = `You (@${requestedGithubUsername}) has been requested to review [${title}](${url}) by @${requestUsername}.`;
+  if (!prInfo.url) {
+    throw new Error("prInfo.url is null or undefined");    
+  }
+
+  const post = buildPrReviewRequestedMention(
+    prInfo.requestedGithubUsername,
+    prInfo.title,
+    prInfo.url,
+    prInfo.requestorUsername
+  );
+
   const { teamsWebhookUrl } = allInputs;
-
-  const post: TeamsPostParam = {
-    headline: title,
-    summary: `New PR Review Request from @${requestUsername}!`,
-    message: message,
-    mentions: [requestedGithubUsername],
-    isAlert: false,
-  };
 
   await teamsClient.postToTeams(teamsWebhookUrl, post);
 };
@@ -81,31 +62,23 @@ export const execNormalMention = async (
   const info = pickupInfoFromGithubPayload(payload);
 
   if (info.body === null) {
-    console.error("info.body === null");
-    return;
+    throw new Error("info.body === null");
   }
 
   const githubUsernames = pickupUsername(info.body);
   if (githubUsernames.length === 0) {
-    console.error("githubUsernames.length === 0");
-    return;
+    throw new Error("githubUsernames.length === 0");
   }
 
-  const body = info.body
-    .split("\n")
-    .map((line) => `>\u2003⁣⁣⁣⁣⁣⁣‎‎‎‎${line}`)
-    .join("\n\n");
-
-  const message = `You have been mentioned at [${info.title}](${info.url}) by @${info.senderName}`;
+  const post = buildTeamsNormalMention(
+    githubUsernames,
+    info.title,
+    info.url,
+    info.body,
+    info.senderName
+  );
 
   const { teamsWebhookUrl } = allInputs;
-  const post: TeamsPostParam = {
-    headline: info.title,
-    summary: `New mention from @${info.senderName}!`,
-    message: `${message}\n\n${body}`,
-    mentions: githubUsernames,
-    isAlert: false,
-  };
 
   await teamsClient.postToTeams(teamsWebhookUrl, post);
 };
@@ -132,8 +105,8 @@ export const execPostError = async (
     headline: "ERROR",
     summary: "Error!",
     message: message,
-    mentions: [],
-    isAlert: false,
+    mentions: ["userForErrorNotifications"],
+    isAlert: true,
   };
 
   await teamsClient.postToTeams(teamsWebhookUrl, post);
@@ -148,16 +121,6 @@ const getAllInputs = (): AllInputs => {
     core.setFailed("Error! Need to set `teams-webhook-url`.");
   }
 
-  // const repoToken = core.getInput("repo-token", { required: true });
-  // if (!repoToken) {
-  //   core.setFailed("Error! Need to set `repo-token`.");
-  // }
-
-  // const iconUrl = core.getInput("icon-url", { required: false });
-  // const botName = core.getInput("bot-name", { required: false });
-  // const configurationPath = core.getInput("configuration-path", {
-  //   required: true,
-  // });
   const runId = core.getInput("run-id", { required: false });
 
   const allInputs = {

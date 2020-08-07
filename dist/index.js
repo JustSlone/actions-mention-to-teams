@@ -3364,76 +3364,34 @@ const core = __importStar(__webpack_require__(470));
 const github_1 = __webpack_require__(469);
 const github_2 = __webpack_require__(559);
 const teams_1 = __webpack_require__(752);
-// export const convertToSlackUsername = async (
-//   githubUsernames: string[],
-//   githubClient: typeof GithubRepositoryImpl,
-//   repoToken: string,
-//   configurationPath: string
-// ): Promise<string[]> => {
-//   console.log('convertToSlackUsername', githubUsernames, configurationPath);
-//   const mapping = await githubClient.loadNameMappingConfig(
-//     repoToken,
-//     configurationPath
-//   );
-//   console.log('mapping', mapping)
-//   const slackIds = githubUsernames
-//     .map((githubUsername) => mapping[githubUsername])
-//     .filter((slackId) => slackId !== undefined) as string[];
-//   return slackIds;
-// };
 exports.execPrReviewRequestedMention = async (payload, allInputs, teamsClient) => {
-    var _a, _b, _c;
-    console.log("execPrReviewRequestedMention", payload);
-    const requestedGithubUsername = payload.requested_reviewer.login;
-    // const slackIds = await convertToSlackUsername(
-    //   [requestedGithubUsername],
-    //   githubClient,
-    //   repoToken,
-    //   configurationPath
-    // );
-    // if ([requestedGithubUsername].length === 0) {
-    //   return;
-    // }
-    const title = (_a = payload.pull_request) === null || _a === void 0 ? void 0 : _a.title;
-    const url = (_b = payload.pull_request) === null || _b === void 0 ? void 0 : _b.html_url;
-    // const requestedSlackUserId = slackIds[0];
-    const requestUsername = (_c = payload.sender) === null || _c === void 0 ? void 0 : _c.login;
-    const message = `You (@${requestedGithubUsername}) has been requested to review [${title}](${url}) by @${requestUsername}.`;
+    console.log("execPrReviewRequestedMention");
+    const prInfo = github_2.pickupPrInfoFromGithubPayload(payload);
+    if (!prInfo.title) {
+        throw new Error("prInfo.title is null or undefined");
+    }
+    if (!prInfo.requestedGithubUsername) {
+        throw new Error("prInfo.requestedGithubUsername is null or undefined");
+    }
+    if (!prInfo.url) {
+        throw new Error("prInfo.url is null or undefined");
+    }
+    const post = teams_1.buildPrReviewRequestedMention(prInfo.requestedGithubUsername, prInfo.title, prInfo.url, prInfo.requestorUsername);
     const { teamsWebhookUrl } = allInputs;
-    const post = {
-        headline: title,
-        summary: `New PR Review Request from @${requestUsername}!`,
-        message: message,
-        mentions: [requestedGithubUsername],
-        isAlert: false,
-    };
     await teamsClient.postToTeams(teamsWebhookUrl, post);
 };
 exports.execNormalMention = async (payload, allInputs, teamsClient) => {
     console.log("execNormalMention");
     const info = github_2.pickupInfoFromGithubPayload(payload);
     if (info.body === null) {
-        console.error("info.body === null");
-        return;
+        throw new Error("info.body === null");
     }
     const githubUsernames = github_2.pickupUsername(info.body);
     if (githubUsernames.length === 0) {
-        console.error("githubUsernames.length === 0");
-        return;
+        throw new Error("githubUsernames.length === 0");
     }
-    const body = info.body
-        .split("\n")
-        .map((line) => `>\u2003⁣⁣⁣⁣⁣⁣‎‎‎‎${line}`)
-        .join("\n\n");
-    const message = `You have been mentioned at [${info.title}](${info.url}) by @${info.senderName}`;
+    const post = teams_1.buildTeamsNormalMention(githubUsernames, info.title, info.url, info.body, info.senderName);
     const { teamsWebhookUrl } = allInputs;
-    const post = {
-        headline: info.title,
-        summary: `New mention from @${info.senderName}!`,
-        message: `${message}\n\n${body}`,
-        mentions: githubUsernames,
-        isAlert: false,
-    };
     await teamsClient.postToTeams(teamsWebhookUrl, post);
 };
 const buildCurrentJobUrl = (runId) => {
@@ -3450,8 +3408,8 @@ exports.execPostError = async (error, allInputs, teamsClient) => {
         headline: "ERROR",
         summary: "Error!",
         message: message,
-        mentions: [],
-        isAlert: false,
+        mentions: ["userForErrorNotifications"],
+        isAlert: true,
     };
     await teamsClient.postToTeams(teamsWebhookUrl, post);
 };
@@ -3462,15 +3420,6 @@ const getAllInputs = () => {
     if (!teamsWebhookUrl) {
         core.setFailed("Error! Need to set `teams-webhook-url`.");
     }
-    // const repoToken = core.getInput("repo-token", { required: true });
-    // if (!repoToken) {
-    //   core.setFailed("Error! Need to set `repo-token`.");
-    // }
-    // const iconUrl = core.getInput("icon-url", { required: false });
-    // const botName = core.getInput("bot-name", { required: false });
-    // const configurationPath = core.getInput("configuration-path", {
-    //   required: true,
-    // });
     const runId = core.getInput("run-id", { required: false });
     const allInputs = {
         teamsWebhookUrl,
@@ -10542,8 +10491,7 @@ function hasPreviousPage (link) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.pickupInfoFromGithubPayload = exports.pickupUsername = void 0;
-// import * as yaml from "js-yaml";
+exports.pickupInfoFromGithubPayload = exports.pickupPrInfoFromGithubPayload = exports.pickupUsername = void 0;
 const uniq = (arr) => [...new Set(arr)];
 exports.pickupUsername = (text) => {
     const pattern = /\B@[a-z0-9_-]+/gi;
@@ -10562,6 +10510,15 @@ const acceptActionTypes = {
 };
 const buildError = (payload) => {
     return new Error(`unknown event hook: ${JSON.stringify(payload, undefined, 2)}`);
+};
+exports.pickupPrInfoFromGithubPayload = (payload) => {
+    var _a, _b, _c, _d;
+    return {
+        requestedGithubUsername: (_a = payload.requested_reviewer) === null || _a === void 0 ? void 0 : _a.login,
+        title: (_b = payload.pull_request) === null || _b === void 0 ? void 0 : _b.title,
+        url: (_c = payload.pull_request) === null || _c === void 0 ? void 0 : _c.html_url,
+        requestorUsername: (_d = payload.sender) === null || _d === void 0 ? void 0 : _d.login,
+    };
 };
 exports.pickupInfoFromGithubPayload = (payload) => {
     var _a, _b, _c, _d, _e, _f;
@@ -10626,40 +10583,6 @@ exports.pickupInfoFromGithubPayload = (payload) => {
     }
     throw buildError(payload);
 };
-// const fetchContent = async (
-//   client: GitHub,
-//   repoPath: string
-// ): Promise<string> => {
-//   let params = {
-//     owner: context.repo.owner,
-//     repo: context.repo.repo,
-//     path: repoPath,
-//     ref: context.sha,
-//   };
-//   console.log('fetchContent', params);
-//   const response: any = await client.repos.getContents(params);
-//   return Buffer.from(response.data.content, response.data.encoding).toString();
-// };
-// type MappingFile = {
-//   [githugUsername: string]: string | undefined;
-// };
-// export const GithubRepositoryImpl = {
-//   loadNameMappingConfig: async (
-//     repoToken: string,
-//     configurationPath: string
-//   ) => {
-//     console.log('loadNameMappingConfig', configurationPath);
-//     const githubClient = new GitHub(repoToken);
-//     const configurationContent = await fetchContent(
-//       githubClient,
-//       configurationPath
-//     );
-//     console.log('before safeLoad', configurationContent);
-//     const configObject: MappingFile = yaml.safeLoad(configurationContent) as MappingFile;
-//     console.log('after safeLoad', configObject);
-//     return configObject;
-//   },
-// };
 
 
 /***/ }),
@@ -11927,19 +11850,30 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TeamsRepositoryImpl = exports.buildTeamsErrorMessage = exports.buildTeamsPostMessage = void 0;
+exports.TeamsRepositoryImpl = exports.buildTeamsErrorMessage = exports.buildTeamsNormalMention = exports.buildPrReviewRequestedMention = void 0;
 const axios_1 = __importDefault(__webpack_require__(53));
-// import { FAILSAFE_SCHEMA } from "js-yaml";
-exports.buildTeamsPostMessage = (githubIdsForMention, issueTitle, commentLink, githubBody, senderName) => {
-    console.log('buildTeamsPostMessage', githubIdsForMention, issueTitle, commentLink, githubBody, senderName);
+exports.buildPrReviewRequestedMention = (requestedGithubUsername, prTitle, prUrl, requestorUsername) => {
+    console.log('buildPrReviewRequestedMention', requestedGithubUsername, prTitle, prUrl, requestorUsername);
+    const message = `You (@${requestedGithubUsername}) has been requested to review [${prTitle}](${prUrl}) by @${requestorUsername}.`;
+    const post = {
+        headline: prTitle,
+        summary: `New PR Review Request from @${requestorUsername}!`,
+        message: message,
+        mentions: [requestedGithubUsername],
+        isAlert: false,
+    };
+    return post;
+};
+exports.buildTeamsNormalMention = (githubIdsForMention, issueTitle, commentUrl, githubBody, senderName) => {
+    console.log('buildTeamsPostMessage', githubIdsForMention, issueTitle, commentUrl, githubBody, senderName);
     const body = githubBody
         .split("\n")
         .map((line) => `>\u2003⁣⁣⁣⁣⁣⁣‎‎‎‎${line}`)
         .join("\n\n");
-    const message = `You have been mentioned at [${issueTitle}](${commentLink}) by ${senderName}`;
+    const message = `You have been mentioned at [${issueTitle}](${commentUrl}) by ${senderName}`;
     const post = {
         headline: issueTitle,
-        summary: 'New mention!',
+        summary: `New mention from @${senderName}!`,
         message: `${message}\n\n${body}`,
         mentions: githubIdsForMention,
         isAlert: false,
@@ -11963,20 +11897,9 @@ exports.buildTeamsErrorMessage = (error, currentJobUrl) => {
         "```",
     ].join("\n");
 };
-// const defaultBotName = "Github Mention To Slack";
-// const defaultIconEmoji = ":bell:";
-// const defaultAlert = true;
 exports.TeamsRepositoryImpl = {
     postToTeams: async (webhookUrl, post) => {
         console.log('postToTeams', post);
-        // const test_post: TeamsPostParam = {
-        //   headline: 'New issue notifcation',
-        //   message: 'Goto this issue! [Test Issue](https://github.com/JustSlone/actions-mention-to-slack/issues/1#issuecomment-665969793)',
-        //   summary: 'sadf',
-        //   mentions: ['jslone'], 
-        //   isAlert: true
-        // }
-        // console.log(test_post);
         await axios_1.default.post(webhookUrl, JSON.stringify(post), {
             headers: { "Content-Type": "application/json" },
         });

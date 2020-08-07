@@ -1,25 +1,45 @@
 import axios from "axios";
-// import { FAILSAFE_SCHEMA } from "js-yaml";
 
-export const buildTeamsPostMessage = (
+export const buildPrReviewRequestedMention  = (
+  requestedGithubUsername: string,
+  prTitle: string,
+  prUrl: string,  
+  requestorUsername: string
+) => {
+  console.log('buildPrReviewRequestedMention', requestedGithubUsername, prTitle, prUrl, requestorUsername);
+  
+  const message = `You (@${requestedGithubUsername}) has been requested to review [${prTitle}](${prUrl}) by @${requestorUsername}.`;
+
+  const post: TeamsPostParam = {
+    headline: prTitle,
+    summary: `New PR Review Request from @${requestorUsername}!`,
+    message: message,
+    mentions: [requestedGithubUsername],
+    isAlert: false,
+  };
+
+  return post;
+};
+
+export const buildTeamsNormalMention = (
   githubIdsForMention: string[],
   issueTitle: string,
-  commentLink: string,
+  commentUrl: string,
   githubBody: string,
   senderName: string
 ) => {
-  console.log('buildTeamsPostMessage', githubIdsForMention, issueTitle, commentLink, githubBody, senderName);
+  console.log('buildTeamsPostMessage', githubIdsForMention, issueTitle, commentUrl, githubBody, senderName);
   
   const body = githubBody
     .split("\n")
     .map((line) => `>\u2003⁣⁣⁣⁣⁣⁣‎‎‎‎${line}`)
     .join("\n\n");
 
-  const message = `You have been mentioned at [${issueTitle}](${commentLink}) by ${senderName}`;
+  const message = `You have been mentioned at [${issueTitle}](${commentUrl}) by ${senderName}`;
 
   const post: TeamsPostParam =  {
     headline: issueTitle,
-    summary: 'New mention!',
+    summary: `New mention from @${senderName}!`,
     message: `${message}\n\n${body}`,
     mentions: githubIdsForMention,
     isAlert: false,
@@ -27,6 +47,7 @@ export const buildTeamsPostMessage = (
 
   return post;
 };
+
 
 const openIssueLink =
   "https://github.com/justSlone/actions-mention-to-teams/issues/new";
@@ -60,25 +81,12 @@ export type TeamsPostParam = {
   isAlert: boolean;
 };
 
-// const defaultBotName = "Github Mention To Slack";
-// const defaultIconEmoji = ":bell:";
-// const defaultAlert = true;
-
 export const TeamsRepositoryImpl = {
   postToTeams: async (
     webhookUrl: string,   
     post: TeamsPostParam
   ) => {
     console.log('postToTeams', post);   
-
-    // const test_post: TeamsPostParam = {
-    //   headline: 'New issue notifcation',
-    //   message: 'Goto this issue! [Test Issue](https://github.com/JustSlone/actions-mention-to-slack/issues/1#issuecomment-665969793)',
-    //   summary: 'sadf',
-    //   mentions: ['jslone'], 
-    //   isAlert: true
-    // }
-    // console.log(test_post);
 
     await axios.post(webhookUrl, JSON.stringify(post), {
       headers: { "Content-Type": "application/json" },
