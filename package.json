@@ -4,7 +4,7 @@
   "description": "",
   "main": "src/index.ts",
   "dependencies": {
-    "@actions/core": "^1.2.6",
+    "@actions/core": "^1.9.1",
     "@actions/github": "^2.1.1",
     "axios": "^0.21.1",
     "js-yaml": "^3.14.0"
